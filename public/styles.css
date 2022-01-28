@@ -1,0 +1,74 @@
+#test, #wav1, #wav2, #wav3 {
+    display: none;
+}
+
+.list-group-item:hover {
+    cursor: pointer;
+}
+
+.upload-form {
+    display: flex;
+}
+
+.upload-form .btn {
+    width: 150px;
+    margin-left: 30px;
+}
+
+.list-group-item:hover .delete {
+    display: block;
+}
+
+.delete {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 12px;
+}
+
+.delete:hover {
+    color: red;
+}
+
+.player-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.player-type {
+    display: flex;
+}
+
+.player-type .form-check {
+    font-size: 16px;
+}
+
+#three-ch {
+    display: none;
+}
+
+#three-ch .container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.three-ch-list {
+    display: flex;
+    justify-content: space-around;
+}
+
+.three-ch-wrapper {
+    display: flex;
+    justify-content: space-between;
+}
+
+.three-ch-players {
+    flex-grow: 1;
+}
+
+#volume-three-ch {
+    -webkit-appearance: slider-vertical;
+    writing-mode: bt-lr;
+}

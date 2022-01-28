@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Phone</title>
+    <script src="https://kit.fontawesome.com/891eba7dfb.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="display-3 text-center mb-5">Phone</h1>
+        <div class="card mb-3">
+            <h5 class="card-header">Light level</h5>
+            <div class="card-body">
+                <form>
+                    <input type="range" class="custom-range" id="lightLevel">
+                </form>
+                <div id="lightLevelResult">Current Value: <b></b></div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <h5 class="card-header">Light color</h5>
+            <div class="card-body">
+                <input type="color" class="custom-color" id="lightColor" value="#ffffff">
+                <div id="lightColorResult">Current Value: <b></b></div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <h5 class="card-header">Battery level</h5>
+            <div class="card-body">
+                <button class="btn btn-info btn-lg mb-3" id="batteryLevel" value="">Get battery level</button>
+                <div id="batteryLevelResult">Current Value: <b></b></div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <h5 class="card-header">Storage</h5>
+            <div class="card-body">
+                <button class="btn btn-info btn-lg mb-3" id="storageSpace" value="">Get storage space</button>
+                <div id="storageSpaceTotal">Total space: <b></b></div>
+                <div id="storageSpaceFree">Free space: <b></b></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script src="https://vjs.zencdn.net/7.8.3/video.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-playlist@4.3.1/dist/videojs-playlist.js"></script>
+    <script>
+        const deviceId = new URLSearchParams(document.location.search).get('device');
+        const phoneId = new URLSearchParams(document.location.search).get('id');
+        console.log('phoneId', phoneId);
+        console.log('deviceId', deviceId);
+        let socket = new WebSocket(`ws://${location.host}/?id=${phoneId}`);
+        socket.onopen = function(e) {
+            console.log('Connected')
+        }
+        
+        $(document).ready(function () {
+            $("#lightLevelResult b").html($("#lightLevel").val()/100);
+            $("#lightLevel").change(function () {
+                let value = $(this).val()/100;
+                let data = JSON.stringify({
+                  id: deviceId,
+                  type: 'setLightLevel',
+                  value: value
+                });
+                socket.send(data);
+                console.log(`socket.send(${data}));`);
+                $("#lightLevelResult b").html(value);
+            });
+
+            $("#lightColorResult b").html($("#lightColor").val());
+            $("#lightColor").change(function () {
+                let value = $(this).val();
+                let data = JSON.stringify({
+                  id: deviceId,
+                  type: 'setLightColor',
+                  value: value
+                });
+                socket.send(data);
+                console.log(`socket.send(${data}));`);
+                $("#lightColorResult b").html($("#lightColor").val());
+            });
+
+            $("#batteryLevel").on('click', function() {
+                let data = JSON.stringify({
+                  id: deviceId,
+                  type: 'getBatteryLevel'
+                });
+                socket.send(data);
+                console.log(`socket.send(${data}));`);
+            });
+
+            $("#storageSpace").on('click', function() {
+                let data = JSON.stringify({
+                  id: deviceId,
+                  type: 'getStorageSpace'
+                });
+                socket.send(data);
+                console.log(`socket.send(${data}));`);
+            });
+            socket.onmessage = function(event) {
+                let message = JSON.parse(event.data);
+                switch (message.type) {
+                    case 'sendBatteryLevel':
+                        console.log(`socket.onmessage(${event.data})`);
+                        $('#batteryLevelResult b').html(Math.round(message.value * 100) + '%');
+                        break;
+                    case 'sendStorageSpace':
+                        console.log(`socket.onmessage(${event.data})`);
+                        $('#storageSpaceTotal b').html(message.total + 'Mb');
+                        $('#storageSpaceFree b').html(message.free + '%');
+                        break;
+                    default:
+                        console.log(`socket.onmessage(${event.data})`);
+                        break;
+                }
+            }
+        }); 
+    </script>    
+</body>
+
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Device</title>
+    <script src="https://kit.fontawesome.com/891eba7dfb.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="display-3 text-center mb-5">Device</h1>
+        <div class="card mb-3">
+            <h5 class="card-header">Light level</h5>
+            <div class="card-body">
+                <form>
+                    <input type="range" class="custom-range" id="lightLevel" disabled>
+                </form>
+                <div id="lightLevelResult">Current Value: <b></b></div>
+            </div>            
+        </div>
+        <div class="card mb-3">
+            <h5 class="card-header">Light color</h5>
+            <div class="card-body">
+                <input type="color" class="custom-color" id="lightColor" value="#ffffff" disabled>
+                <div id="lightColorResult">Current Value:: <b></b></div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <h5 class="card-header">Battery level</h5>
+            <div class="card-body">
+                <form>
+                    <input type="range" class="custom-range" id="batteryLevel">
+                </form>
+                <div id="batteryLevelResult">Current Value: <b></b></div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <h5 class="card-header">Storage</h5>
+            <div class="card-body">
+                <form>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Total space</span>
+                        </div>
+                        <input type="text" id="totalSpace" value="1000" class="form-control"
+                            aria-label="Amount (to the nearest dollar)">
+                        <div class="input-group-append">
+                            <span class="input-group-text">Mb</span>
+                        </div>
+                    </div>
+                    <input type="range" class="custom-range" id="freeSpace">
+                </form>
+                <div id="freeSpaceResult">Free space: <b></b></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script src="https://vjs.zencdn.net/7.8.3/video.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-playlist@4.3.1/dist/videojs-playlist.js"></script>
+    <script>       
+        const deviceId = new URLSearchParams(document.location.search).get('device');
+        const phoneId = new URLSearchParams(document.location.search).get('id');
+        let socket = new WebSocket(`ws://${location.host}/?id=${deviceId}`);
+        socket.onopen = function(e) {
+            console.log('Connected')
+        }
+        socket.onmessage = function(event) {
+            let message = JSON.parse(event.data);
+            switch (message.type) {
+                case 'setLightLevel':
+                    $("#lightLevel").val(message.value*100);
+                    $("#lightLevelResult b").html(message.value);
+                    console.log(`socket.onmessage(${event.data})`);
+                    break;
+                case 'setLightColor':
+                    $("#lightColor").val(message.value);
+                    $("#lightColorResult b").html(message.value);
+                    console.log(`socket.onmessage(${event.data})`);
+                    break;
+                case 'getBatteryLevel':
+                    console.log(`socket.onmessage(${event.data})`);
+                    let value = $("#batteryLevel").val()/100;
+                    let dataBattery = JSON.stringify({
+                        id: phoneId,
+                        type: 'sendBatteryLevel',
+                        value: value
+                    });
+                    socket.send(dataBattery);
+                    console.log(`socket.send(${dataBattery}));`);
+                    break;
+                case 'getStorageSpace':
+                    console.log(`socket.onmessage(${event.data})`);
+                    let totalSpace = $("#totalSpace").val();
+                    let freeSpace = $("#freeSpace").val();
+                    let dataStorage = JSON.stringify({
+                        id: phoneId,
+                        type: 'sendStorageSpace',
+                        total: totalSpace, 
+                        free: freeSpace
+                    });
+                    socket.send(dataStorage);
+                    console.log(`socket.send(${dataStorage}));`);
+                    break;
+                default:
+                    console.log(`socket.onmessage(${event.data})`);
+                    break;
+            }
+        }
+        $(document).ready(function () {
+            $("#lightLevelResult b").html($("#lightLevel").val()/100);
+            $("#lightColorResult b").html($("#lightColor").val());
+            $("#batteryLevelResult b").html($("#batteryLevel").val() + '%');
+            $("#freeSpaceResult b").html($("#freeSpace").val() + '%');
+            $("#batteryLevel").change(function () {
+                $("#batteryLevelResult b").html($("#batteryLevel").val() + '%');
+            });
+            $("#freeSpace").change(function () {
+                $("#freeSpaceResult b").html($("#freeSpace").val() + '%');
+            });
+        }); 
+    </script>
+</body>
+
+</html>
